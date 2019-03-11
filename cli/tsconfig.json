@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "es5",
+    "lib": ["es2017", "es2015", "dom", "es6"],
+    "module": "commonjs",
+    "outDir": "./bin",
+    "sourceMap": false,
+    "strict": false,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true,
+    "noEmitOnError": true,
+    "typeRoots": ["./@types", "./node_modules/@types"]
+  },
+  "include": ["**.ts"],
+  "exclude": ["node_modules", "./@types"]
+}
