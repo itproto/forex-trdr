@@ -64,19 +64,110 @@ export const main = async () => {
 // main();
 
 const JSONStream = require('JSONStream');
+
 export const foo = async () => {
   const pair = 'EURUSD';
   const path = __dirname + `/out/${pair}.json`;
   var stream = fs.createReadStream(path, { encoding: 'utf8' }),
     parser = JSONStream.parse();
   stream.pipe(parser);
+  let len = 0;
   parser.on('data', obj => {
-    console.log(obj.length);
-    const dic = {}; // resolution 100ms
-    const start = Date.parse('01.02.2019');
-    obj.forEach((el: any) => {
-      el.gmtTime.getTime() - start;
-    });
+    const ds = obj.reduce((ds: any, el: any) => {
+      const date = new Date(el.gmtTime);
+      const [hour, min, sec, ms] = [
+        date.getHours(),
+        date.getMinutes(),
+        date.getSeconds(),
+        date.getMilliseconds()
+      ];
+      const todayDate = new Date();
+      todayDate.setHours(hour, min, sec, ms);
+      const ts = (min * 60 + sec) * 1000 + ms;
+      const item = { ...el, date: todayDate, ts };
+      const dsPair = (ds[pair] = ds[pair] || {});
+      const dsHour = (dsPair[hour] = dsPair[hour] || []);
+      dsHour[min] = dsHour[min] ? [...dsHour[min], item] : [item];
+      const { length } = dsHour[min];
+      if (length > len) {
+        len = length;
+      }
+      return ds;
+    }, []);
+
+    const getMidnight = () => new Date(new Date().setHours(0, 0, 0));
+
+    function* makeDsIterator(ds: any, pair = 'EURUSD', rewindToDate?: Date) {
+      if (!ds) {
+        return;
+      }
+
+      const dsPair = ds[pair];
+      if (!dsPair || dsPair.length < 1) {
+        return;
+      }
+
+      const date = rewindToDate || getMidnight();
+      const [hour, min, sec, ms] = [
+        date.getHours(),
+        date.getMinutes(),
+        date.getSeconds(),
+        date.getMilliseconds()
+      ];
+      // const ts = (min * 60 + sec) * 1000 + ms;
+
+      let targetMin = min;
+
+      let dsHour = dsPair[hour];
+      if (!dsHour) {
+        let targetHour = hour;
+        while (dsPair[targetHour] === undefined) {
+          if (targetHour === 0) {
+            return;
+          }
+          targetHour--;
+        }
+      }
+
+      //4 7
+      // 6
+
+      /*
+        for (let i = start; i < end; i += step) {
+            iterationCount++;
+            yield i;
+        }
+        return iterationCount;
+        */
+    }
+    /*
+    const makeDsIterator(ds:any, start = new Date) => {
+        const [hour, min] = [
+            date.getHours(),
+            date.getMinutes()
+            // date.getSeconds()
+            // date.getMilliseconds()
+          ];
+
+        let nextIndex = start;
+        let iterationCount = 0;
+    
+        const rangeIterator = {
+           next: function() {
+               let result;
+               if (nextIndex <= end) {
+                   result = { value: nextIndex, done: false }
+                   nextIndex += step;
+                   iterationCount++;
+                   return result;
+               }
+               return { value: iterationCount, done: true }
+           }
+        };
+        return rangeIterator;
+    }
+    */
+    console.log(ds[pair][0][29]);
   });
 };
 
